@@ -1,0 +1,1 @@
+export function isOverdue(d){ if(!d) return false; const t=new Date(d); if(isNaN(+t)) return false; const now=new Date(); now.setHours(0,0,0,0); t.setHours(0,0,0,0); return t<now; }

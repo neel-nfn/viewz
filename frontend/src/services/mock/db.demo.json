@@ -1,0 +1,125 @@
+{
+  "org": {
+    "id": "org_demo_1",
+    "name": "Demo Org"
+  },
+  "channels": [
+    {
+      "id": "chan_gp_f1",
+      "title": "Grid Pulse F1",
+      "status": "connected",
+      "logoUrl": "/logo_gp.png",
+      "brandColor": "#E10600"
+    },
+    {
+      "id": "chan_fc",
+      "title": "Formula Cats",
+      "status": "connected",
+      "logoUrl": "/logo_fc.png",
+      "brandColor": "#00A19A"
+    }
+  ],
+  "users": [
+    {
+      "id": "u_admin",
+      "name": "You (Admin)",
+      "role": "admin"
+    },
+    {
+      "id": "u_mgr",
+      "name": "Manager Mia",
+      "role": "manager"
+    },
+    {
+      "id": "u_wrt",
+      "name": "Writer Will",
+      "role": "writer"
+    },
+    {
+      "id": "u_edt",
+      "name": "Editor Eva",
+      "role": "editor"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "channel_id": "chan_gp_f1",
+      "title": "Horner exit rumor explainer",
+      "status": "writing",
+      "assigned_to": "u_wrt",
+      "priority": "high",
+      "due_date": "2025-11-03",
+      "badges": {
+        "script": true
+      }
+    },
+    {
+      "id": "t2",
+      "channel_id": "chan_gp_f1",
+      "title": "Lando vs Max thumbnail A/B",
+      "status": "scheduled",
+      "assigned_to": "u_mgr",
+      "priority": "medium",
+      "due_date": "2025-11-04",
+      "badges": {
+        "thumbnail": true
+      }
+    },
+    {
+      "id": "t3",
+      "channel_id": "chan_fc",
+      "title": "Cats react to Singapore chaos",
+      "status": "editing",
+      "assigned_to": "u_edt",
+      "priority": "high",
+      "due_date": "2025-11-02",
+      "badges": {
+        "script": true,
+        "voice": false
+      }
+    },
+    {
+      "id": "t4",
+      "channel_id": "chan_fc",
+      "title": "Piastri rise mini-doc",
+      "status": "research",
+      "assigned_to": "u_wrt",
+      "priority": "low",
+      "due_date": null
+    }
+  ],
+  "comments": {
+    "t1": [
+      {
+        "id": "c1",
+        "user_id": "u_wrt",
+        "body": "Hook v2 ready.",
+        "created_at": "2025-11-02T06:00:00Z"
+      }
+    ]
+  },
+  "attachments": {
+    "t1": [
+      {
+        "id": "a1",
+        "type": "script",
+        "fileUrl": "/demo/scripts/horner_v2.txt",
+        "uploaded_by": "u_wrt",
+        "created_at": "2025-11-02T06:01:00Z"
+      }
+    ]
+  },
+  "activity": {
+    "t1": [
+      {
+        "id": "ac1",
+        "user_id": "u_mgr",
+        "action": "status_change",
+        "old_status": "research",
+        "new_status": "writing",
+        "timestamp": "2025-11-02T05:00:00Z"
+      }
+    ]
+  }
+}

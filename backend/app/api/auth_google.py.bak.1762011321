@@ -1,0 +1,186 @@
+import os
+import urllib.parse
+import httpx
+import json
+import logging
+from pathlib import Path
+from fastapi import APIRouter, Request, HTTPException
+from fastapi.responses import RedirectResponse
+from fastapi import Depends
+from datetime import datetime, timedelta
+from app.api.deps import get_current_user, get_current_user_org
+from app.services import supabase_service
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
+
+GOOGLE_AUTH = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN = "https://oauth2.googleapis.com/token"
+
+CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "")
+SCOPE = os.environ.get("YOUTUBE_OAUTH_SCOPE", "https://www.googleapis.com/auth/youtube.readonly")
+
+FRONTEND_OK = os.environ.get("FRONTEND_AUTH_SUCCESS_URL", "http://localhost:5173/auth/success")
+FRONTEND_FAIL = os.environ.get("FRONTEND_AUTH_FAIL_URL", "http://localhost:5173/auth/fail")
+
+@router.get("/login")
+def login(request: Request):
+    params = {
+        "response_type": "code",
+        "client_id": CLIENT_ID,
+        "redirect_uri": REDIRECT_URI,
+        "scope": SCOPE,
+        "access_type": "offline",
+        "include_granted_scopes": "true",
+        "prompt": "consent",
+        "state": "xyz"
+    }
+    url = f"{GOOGLE_AUTH}?{urllib.parse.urlencode(params)}"
+    return RedirectResponse(url)
+
+async def _exchange_code_for_tokens(code: str):
+    data = {
+        "code": code,
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+        "redirect_uri": REDIRECT_URI,
+        "grant_type": "authorization_code"
+    }
+    async with httpx.AsyncClient() as client:
+        r = await client.post(GOOGLE_TOKEN, data=data, headers={"Content-Type": "application/x-www-form-urlencoded"})
+        if r.status_code != 200:
+            raise HTTPException(status_code=400, detail=f"token_exchange_failed: {r.text}")
+        return r.json()
+
+async def _fetch_youtube_channel(access_token: str):
+    url = "https://www.googleapis.com/youtube/v3/channels"
+    params = {"part": "snippet", "mine": "true"}
+    headers = {"Authorization": f"Bearer {access_token}"}
+    async with httpx.AsyncClient() as client:
+        r = await client.get(url, params=params, headers=headers)
+        if r.status_code != 200:
+            raise HTTPException(status_code=400, detail=f"youtube_fetch_failed: {r.text}")
+        data = r.json()
+        items = data.get("items", [])
+        if not items:
+            raise HTTPException(status_code=404, detail="no_channel_found_for_account")
+        ch = items[0]
+        return {
+            "youtube_channel_id": ch["id"],
+            "title": ch["snippet"]["title"],
+            "logo_url": ch["snippet"]["thumbnails"]["default"]["url"] if ch["snippet"].get("thumbnails") else None
+        }
+
+try:
+    from app.utils.encryption import encrypt as _enc
+except Exception:
+    def _enc(x: str) -> str:
+        return x  # fallback no-op
+
+async def _save_channel_and_token(channel, refresh_token: str, org_id: str):
+    import os
+    import pathlib
+    
+    # Check environment variables directly (not module-level constants)
+    supabase_url = os.getenv("SUPABASE_URL", "").strip()
+    supabase_key = os.getenv("SUPABASE_SERVICE_KEY", "").strip()
+    
+    # Use LOCAL_STORE_DIR if set, otherwise default to local_dev_store relative to backend
+    store_dir = os.getenv("LOCAL_STORE_DIR")
+    if not store_dir:
+        # Default to local_dev_store relative to backend directory
+        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        store_dir = os.path.join(backend_dir, "local_dev_store")
+    
+    logger.info(f"[OAUTH_SAVE] Checking save path: supabase_url={bool(supabase_url)}, supabase_key={bool(supabase_key)}")
+    logger.info(f"[OAUTH_SAVE] Store directory: {store_dir}")
+    
+    if supabase_url and supabase_key:
+        logger.info("[OAUTH_SAVE] Using Supabase path")
+        ch = supabase_service.upsert_channel(
+            org_id=org_id,
+            youtube_channel_id=channel["youtube_channel_id"],
+            title=channel["title"],
+            logo_url=channel.get("logo_url"),
+        )
+        cid = ch.get("id") if isinstance(ch, dict) else None
+        if not cid:
+            raise RuntimeError("channel_id_missing_after_upsert")
+        if refresh_token:
+            supabase_service.insert_or_update_token(channel_id=cid, refresh_token_encrypted=_enc(refresh_token))
+    else:
+        logger.info("[OAUTH_SAVE] Using LOCAL STORE path")
+        logger.info(f"[OAUTH_SAVE] Channel data: {channel}")
+        pathlib.Path(store_dir).mkdir(parents=True, exist_ok=True)
+        channels_file = os.path.join(store_dir, "channels.json")
+        token_file = os.path.join(store_dir, "oauth_token.json")
+        
+        logger.info(f"[OAUTH_SAVE] Writing channels.json to: {channels_file}")
+        try:
+            with open(channels_file, "w") as f:
+                f.write(json.dumps({"org_id": org_id, **channel}, indent=2))
+            logger.info(f"[OAUTH_SAVE] ✅ channels.json written successfully")
+        except Exception as e:
+            logger.error(f"[OAUTH_SAVE] ❌ Failed to write channels.json: {e}")
+            raise
+        
+        if refresh_token:
+            logger.info(f"[OAUTH_SAVE] Writing oauth_token.json to: {token_file}")
+            try:
+                with open(token_file, "w") as f:
+                    f.write(json.dumps({"refresh_token": _enc(refresh_token)}, indent=2))
+                logger.info(f"[OAUTH_SAVE] ✅ oauth_token.json written successfully")
+            except Exception as e:
+                logger.error(f"[OAUTH_SAVE] ❌ Failed to write oauth_token.json: {e}")
+                raise
+        else:
+            logger.warning("[OAUTH_SAVE] ⚠️  No refresh_token provided")
+
+@router.get("/callback")
+async def callback(code: str = "", state: str = "", user=Depends(get_current_user), org=Depends(get_current_user_org)):
+    logger.info(f"[OAUTH_CALLBACK] Callback received: code={'present' if code else 'MISSING'}, org_id={org.get('org_id', 'MISSING')}")
+    
+    if not code:
+        logger.error("[OAUTH_CALLBACK] ❌ Missing code parameter")
+        return RedirectResponse(f"{FRONTEND_FAIL}?error=missing_code")
+    
+    try:
+        logger.info("[OAUTH_CALLBACK] Exchanging code for tokens...")
+        tok = await _exchange_code_for_tokens(code)
+        access_token = tok.get("access_token")
+        refresh_token = tok.get("refresh_token")
+        
+        logger.info(f"[OAUTH_CALLBACK] Token exchange: access_token={'present' if access_token else 'MISSING'}, refresh_token={'present' if refresh_token else 'MISSING'}")
+        
+        if not access_token:
+            logger.error("[OAUTH_CALLBACK] ❌ No access_token received")
+            return RedirectResponse(f"{FRONTEND_FAIL}?error=no_access_token")
+        
+        if not refresh_token:
+            logger.warning("[OAUTH_CALLBACK] ⚠️  No refresh_token (Google may omit if previously consented)")
+            # Google may omit refresh_token if user previously consented; consider prompt=consent & access_type=offline or token refresh path.
+        
+        logger.info("[OAUTH_CALLBACK] Fetching YouTube channel...")
+        ch = await _fetch_youtube_channel(access_token)
+        logger.info(f"[OAUTH_CALLBACK] Channel fetched: {ch.get('title', 'UNKNOWN')} (ID: {ch.get('youtube_channel_id', 'UNKNOWN')})")
+        
+        logger.info("[OAUTH_CALLBACK] Saving channel and token...")
+        await _save_channel_and_token(ch, refresh_token or "", org_id=org['org_id'])
+        logger.info("[OAUTH_CALLBACK] ✅ Save completed successfully")
+        
+        # Optionally: set a server session / cookie here.
+        # Finally, send user back to the app with a success flag.
+        q = urllib.parse.urlencode({"channel": ch["title"], "id": ch["youtube_channel_id"]})
+        logger.info(f"[OAUTH_CALLBACK] Redirecting to frontend success: {FRONTEND_OK}?{q}")
+        return RedirectResponse(f"{FRONTEND_OK}?{q}")
+    except HTTPException as e:
+        logger.error(f"[OAUTH_CALLBACK] ❌ HTTPException: {e.detail}")
+        return RedirectResponse(f"{FRONTEND_FAIL}?error={urllib.parse.quote(str(e.detail))}")
+    except Exception as e:
+        logger.error(f"[OAUTH_CALLBACK] ❌ Exception: {type(e).__name__}: {str(e)}")
+        import traceback
+        logger.error(f"[OAUTH_CALLBACK] Traceback:\n{traceback.format_exc()}")
+        return RedirectResponse(f"{FRONTEND_FAIL}?error={urllib.parse.quote(str(e))}")

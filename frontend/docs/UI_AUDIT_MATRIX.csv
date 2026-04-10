@@ -1,0 +1,19 @@
+Page,Route,Purpose,Primary CTA,Secondary CTAs,Visual Debt,Severity,Quick Fix,Owner,Status
+Landing,/,"Public first impression - convert visitors",Get Started,Try Demo / See Pricing,Basic gradient hero needs polish,High,Add feature cards + CTA banner,UI Team,Pending
+Dashboard,/app,"Daily user touchpoint - overview",New Task,View Analytics / AI Assist,Needs widget cards + layout,High,Convert to Card grid layout,UI Team,Pending
+Analytics,/app/analytics,"Channel performance metrics",Export Report,Filter / Date Range,Charts need containers,Medium,Wrap in Card components,UI Team,Pending
+Research,/app/research,"Idea scoring and outliers",Add to Pipeline,Score Idea,Missing PageHeader,Medium,Add header + actions,UI Team,Pending
+Pipeline/Demo,/demo,"Kanban workflow board",Add Task,Filter / Analytics,Needs consistent card styling,High,Standardize task cards,UI Team,Pending
+AI Assist,Drawer,"AI SEO generation",Generate SEO,Apply Title,Drawer needs polish,Medium,Consistent drawer UI,UI Team,Pending
+Onboarding,/onboarding,"User setup flow",Connect Channel,Skip to Demo,Needs modern wizard UI,High,Multi-step wizard design,UI Team,Pending
+Settings,/app/settings,"App configuration",Save Changes,Back to Dashboard,Needs tabs/layout,Medium,Add tab navigation,UI Team,Pending
+Terms,/public/terms,"Legal compliance",Back to Home,-,Basic layout,Low,Add PageHeader,UI Team,Pending
+Privacy,/public/privacy,"Legal compliance",Back to Home,-,Basic layout,Low,Add PageHeader,UI Team,Pending
+Roadmap,/public/roadmap,"Public feature roadmap",Suggest Feature,Back to Home,Markdown render needs styling,Low,Style markdown content,UI Team,Pending
+Changelog,/public/changelog,"Version history",Back to Home,-,Markdown render needs styling,Low,Style markdown content,UI Team,Pending
+FAQ,/public/faq,"User questions",Contact Support,Back to Home,Basic accordion,Low,Add icons/spacing,UI Team,Pending
+Support,/public/support,"Ticket submission",Submit Ticket,Back to Home,Form needs validation UI,Medium,Add form validation states,UI Team,Pending
+Pricing,/public/pricing,"Tier selection",Get Started,View FAQ,Needs comparison table,Medium,Add tier comparison table,UI Team,Pending
+Auth Success,/auth/success,"OAuth completion",Go to Dashboard,View Channels,Basic redirect page,Low,Add success animation,UI Team,Pending
+Auth Fail,/auth/fail,"OAuth error",Try Again,Contact Support,Basic error page,Low,Add error explanation,UI Team,Pending
+

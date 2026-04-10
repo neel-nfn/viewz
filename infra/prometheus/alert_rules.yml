@@ -1,0 +1,31 @@
+groups:
+  - name: viewz-auth-and-errors
+    interval: 30s
+    rules:
+      - alert: AuthErrorRateHigh
+        expr: sum(rate(auth_failures_total[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elevated auth failures"
+          description: "Auth failures > 5 per 5m (check OAuth loop / session)."
+
+      - alert: High5xxRate
+        expr: sum(rate(http_5xx_total[5m])) > 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Server 5xx spike"
+          description: "5xx > 1 per 5m. Inspect backend logs and recent deploy."
+
+      - alert: APIUnavailable
+        expr: up{job="viewz-backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend down"
+          description: "Prometheus cannot scrape /metrics from backend."
+

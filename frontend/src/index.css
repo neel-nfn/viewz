@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a, button {
+  transition: all 0.2s ease;
+}
+
+a:hover, button:hover {
+  transform: translateY(-1px);
+}
+
+a:active, button:active {
+  transform: translateY(0);
+}
+
+/* Smooth scrolling */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Focus styles */
+a:focus-visible, button:focus-visible {
+  outline: 2px solid #0ea5b7;
+  outline-offset: 2px;
+}

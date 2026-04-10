@@ -1,0 +1,31 @@
+{
+  "frontend": {
+    "mainInjected": true,
+    "mainContent": "Lines 9, 15-16: import debugAuth from './utils/debugAuth'; window.debugAuth = debugAuth; console.log('🧠 Supabase debugAuth() ready globally');",
+    "debugAuthExists": true,
+    "debugAuthExport": "default export",
+    "apiClientExportsDefault": true,
+    "apiClientFinalExport": "export default api; export { api };",
+    "depsInstalled": true,
+    "depsVersions": {
+      "@supabase/supabase-js": "^2.78.0",
+      "axios": "^1.13.1"
+    }
+  },
+  "backend": {
+    "envHasSupabaseSecret": true,
+    "envHasSupabaseUrl": true,
+    "envHasDatabaseUrls": true,
+    "envValues": {
+      "SUPABASE_URL": "present (redacted)",
+      "SUPABASE_JWT_SECRET": "present (redacted)",
+      "DATABASE_URL": "present (redacted)",
+      "SUPABASE_DB_URL": "present (redacted)"
+    },
+    "jwtDecodeInDeps": true,
+    "jwtDecodeCode": "payload = jwt.decode(token, SUPABASE_JWT_SECRET, algorithms=['HS256'])",
+    "getCurrentUserFunction": "Lines 12-20: Uses HTTPBearer, checks creds, decodes JWT with SUPABASE_JWT_SECRET"
+  },
+  "notes": "All files verified and corrected. apiClient now exports both default (for debugAuth) and named (for backward compatibility). Dependencies installed. Ready for testing."
+}
+
