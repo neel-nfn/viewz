@@ -2,12 +2,16 @@ function trimSlash(value) {
   return typeof value === "string" ? value.replace(/\/+$/, "") : "";
 }
 
+function stripApiVersionSuffix(value) {
+  return trimSlash(value).replace(/\/api\/v1$/, "");
+}
+
 function getRuntimeApiBase() {
   if (typeof window === "undefined") {
     return "";
   }
 
-  const runtimeBase = trimSlash(window.__VIEWZ_API_BASE_URL__);
+  const runtimeBase = stripApiVersionSuffix(window.__VIEWZ_API_BASE_URL__);
   if (runtimeBase) {
     return runtimeBase;
   }
@@ -23,7 +27,7 @@ function getRuntimeApiBase() {
 
 export function getApiBase() {
   return (
-    trimSlash(import.meta.env.VITE_API_BASE_URL) ||
+    stripApiVersionSuffix(import.meta.env.VITE_API_BASE_URL) ||
     getRuntimeApiBase() ||
     "http://localhost:8000"
   );

@@ -1,4 +1,6 @@
-const API_BASE = "/api/v1";
+import { getApiBase } from "../lib/apiBase";
+
+const API_BASE = `${getApiBase()}/api/v1`;
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
