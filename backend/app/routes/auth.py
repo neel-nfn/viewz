@@ -1,9 +1,7 @@
-
 from fastapi import APIRouter, Response, HTTPException, Depends, Request as FastAPIRequest
 from app.api.deps import get_current_user
 from pydantic import BaseModel
-from urllib.parse import urlencode
-import secrets
+from app.api.auth_login_fixed import build_auth_url
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
@@ -18,11 +16,9 @@ class LoginBody(BaseModel):
 @router.post("/login")
 def start_login(body: LoginBody | None = None):
     state = (body.state or "").strip() if body else ""
-    params = {
-        "code": "dev",
-        "state": state
-    }
-    oauth_redirect_url = f"http://localhost:5173/auth/callback?{urlencode(params)}"
+    oauth_redirect_url = build_auth_url(state=state or "xyz")
+    if not oauth_redirect_url:
+        raise HTTPException(status_code=500, detail="OAuth not configured")
     return {"oauth_redirect_url": oauth_redirect_url}
 
 # NOTE: Google OAuth callback is handled by app.api.auth_google.callback

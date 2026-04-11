@@ -41,7 +41,7 @@ def debug_auth_url():
     return {"client_id_set": bool(CLIENT_ID), "redirect_uri": REDIRECT_URI, "url": url}
 
 @router.get("/login")
-def login():
+def login(state: str = "xyz"):
     # In local dev, if Google creds are missing, return stub response
     if is_local_dev() and not has_google_creds():
         return JSONResponse(
@@ -53,7 +53,7 @@ def login():
             }
         )
     
-    url = build_auth_url()
+    url = build_auth_url(state=state)
     if not url:
         # If not local dev, return error
         return Response(content="OAuth not configured (client_id / redirect_uri missing).", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

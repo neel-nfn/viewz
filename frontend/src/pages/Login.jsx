@@ -9,7 +9,7 @@ export default function Login() {
   const state = useMemo(() => (rawState && rawState.startsWith("/")) ? rawState : null, [rawState]);
 
   async function handleLogin() {
-    await startGoogleLogin(state ?? "/settings/team-roles");
+    await startGoogleLogin(state ?? "/app/settings/team-roles");
   }
 
   return (

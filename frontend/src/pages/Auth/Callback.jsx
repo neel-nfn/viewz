@@ -13,7 +13,7 @@ export default function AuthCallback() {
         await completeOAuthCallback(search);
         const q = new URLSearchParams(search);
         const next = q.get("state");
-        const target = (next && next.startsWith("/")) ? next : "/settings/team-roles";
+        const target = (next && next.startsWith("/")) ? next : "/app/settings/team-roles";
         nav(target, { replace: true });
       } catch {
         nav("/login", { replace: true });
@@ -24,4 +24,3 @@ export default function AuthCallback() {
 
   return <div className="p-6">Completing sign in…</div>;
 }
-

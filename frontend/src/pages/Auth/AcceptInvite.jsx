@@ -47,7 +47,7 @@ export default function AcceptInvite() {
         const res = await acceptInvite(token);
         if (res.accepted) {
           setState("success");
-          setTimeout(() => navigate("/settings/team-roles"), 1200);
+          setTimeout(() => navigate("/app/settings/team-roles"), 1200);
         } else {
           setState("error");
           setMessage("Could not accept invite.");
@@ -74,5 +74,4 @@ export default function AcceptInvite() {
   if (state === "success") return <div className="p-6 text-green-600">Invite accepted. Redirecting…</div>;
   return <div className="p-6 text-red-600">Invite failed: {message || "Try again or contact admin."}</div>;
 }
-
 

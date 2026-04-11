@@ -4,12 +4,11 @@ import httpx
 import json
 import logging
 from pathlib import Path
+from urllib.parse import parse_qs
 from fastapi import APIRouter, Request, HTTPException
 from app.utils.org import resolve_org_id
 from fastapi.responses import RedirectResponse, JSONResponse
-from fastapi import Depends
 from datetime import datetime, timedelta
-from app.api.deps import get_current_user, get_current_user_org
 from app.services import supabase_service
 from app.utils.tier_enforcement import can_add_channel
 
@@ -166,8 +165,59 @@ async def _save_channel_and_token(ch, refresh_token: str, org_id):
         """, {"cid": channel_id, "rt": refresh_token or "", "sc": scopes})
 
     print('[UPSERT OK]', {'org_id':str(org_id),'channel_id':str(channel_id),'gcid':google_channel_id,'title':title}); return channel_id
+
+def _parse_oauth_state(raw_state: str) -> dict[str, str]:
+    """
+    Parse OAuth state passed from the frontend.
+
+    Supports:
+    - plain paths like "/settings/team-roles"
+    - querystring payloads like "next=/settings/team-roles&org_id=..."
+    - JSON payloads like '{"next": "/settings/team-roles", "org_id": "..."}'
+    """
+    parsed = {"next": "/app", "org_id": os.getenv("ORG_ID", "")}
+    state = (raw_state or "").strip()
+    if not state:
+        return parsed
+
+    if state.startswith("/"):
+        parsed["next"] = state
+        return parsed
+
+    if state.startswith("{"):
+        try:
+            data = json.loads(state)
+            if isinstance(data, dict):
+                next_value = data.get("next") or data.get("state")
+                if isinstance(next_value, str) and next_value.startswith("/"):
+                    parsed["next"] = next_value
+                org_value = data.get("org_id") or data.get("org")
+                if org_value:
+                    parsed["org_id"] = str(org_value)
+                return parsed
+        except Exception:
+            pass
+
+    try:
+        query = parse_qs(state, keep_blank_values=True)
+        if query:
+            next_value = (query.get("next") or query.get("state") or [""])[0]
+            if isinstance(next_value, str) and next_value.startswith("/"):
+                parsed["next"] = next_value
+            org_value = (query.get("org_id") or query.get("org") or [""])[0]
+            if org_value:
+                parsed["org_id"] = org_value
+            return parsed
+    except Exception:
+        pass
+
+    return parsed
+
 @router.get("/callback")
-async def callback(code: str = "", state: str = "", user=Depends(get_current_user), org=Depends(get_current_user_org)):
+async def callback(code: str = "", state: str = ""):
+    state_ctx = _parse_oauth_state(state)
+    org_id = resolve_org_id(state_ctx.get("org_id"))
+    next_path = state_ctx.get("next") or "/app"
     # In local dev, if Google creds are missing, return stub response
     if is_local_dev() and not has_google_creds():
         logger.info("[OAUTH_CALLBACK] Local dev mode: OAuth skipped - Google creds not set")
@@ -177,10 +227,7 @@ async def callback(code: str = "", state: str = "", user=Depends(get_current_use
                 "status": "oauth_skipped_in_local",
                 "reason": "google creds not set",
                 "message": "Google OAuth is not configured in local development. Using Supabase auth only.",
-                "stub_user": {
-                    "id": user.get("sub", "dev_user") if user else "dev_user",
-                    "org_id": str(org.get("org_id", "00000000-0000-0000-0000-000000000000")) if org else "00000000-0000-0000-0000-000000000000"
-                }
+                "stub_user": {"id": "dev_user", "org_id": str(org_id)}
             }
         )
     
@@ -194,7 +241,7 @@ async def callback(code: str = "", state: str = "", user=Depends(get_current_use
         json.dump({"ok": True, "t": "sentinel"}, _f)
     logger.info(f"[OAUTH_CALLBACK] SENTINEL WRITE COMPLETE - Store: {_store}")
     
-    logger.info(f"[OAUTH_CALLBACK] Callback received: code={'present' if code else 'MISSING'}, org_id={org.get('org_id', 'MISSING')}")
+    logger.info(f"[OAUTH_CALLBACK] Callback received: code={'present' if code else 'MISSING'}, org_id={org_id}, next={next_path}")
     
     if not code:
         logger.error("[OAUTH_CALLBACK] ❌ Missing code parameter")
@@ -226,19 +273,19 @@ async def callback(code: str = "", state: str = "", user=Depends(get_current_use
         logger.info(f"[OAUTH_CALLBACK] Channel fetched: {ch.get('title', 'UNKNOWN')} (ID: {ch.get('youtube_channel_id', 'UNKNOWN')})")
         
         # Check tier limits before saving
-        can_add, error_msg = can_add_channel(org_id=resolve_org_id(org.get('org_id')))
+        can_add, error_msg = can_add_channel(org_id=str(org_id))
         if not can_add:
             logger.warning(f"[OAUTH_CALLBACK] ⚠️  Channel limit reached: {error_msg}")
             return RedirectResponse(f"{FRONTEND_FAIL}?error={urllib.parse.quote(error_msg or 'channel_limit_reached')}")
         
         logger.info("[OAUTH_CALLBACK] Saving channel and token...")
-        await _save_channel_and_token(ch, refresh_token or "", org_id=resolve_org_id(org.get('org_id')))
+        await _save_channel_and_token(ch, refresh_token or "", org_id=str(org_id))
         logger.info("[OAUTH_CALLBACK] ✅ Save completed successfully")
         
         # Set session cookie for local dev
         import secrets
         session_token = secrets.token_urlsafe(32)
-        response = RedirectResponse(url=f"{FRONTEND_OK}?new=1&channel={urllib.parse.quote(ch['title'])}&id={ch['youtube_channel_id']}")
+        response = RedirectResponse(url=f"{FRONTEND_OK}?new=1&channel={urllib.parse.quote(ch['title'])}&id={ch['youtube_channel_id']}&next={urllib.parse.quote(next_path)}")
         
         # Cookie settings for local dev (SameSite=Lax, Secure=False, no Domain)
         cookie_domain = os.getenv("SESSION_COOKIE_DOMAIN", "").strip()
