@@ -1,4 +1,6 @@
-const BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+import { getApiBase } from "../lib/apiBase";
+
+const BASE = getApiBase();
 
 function isApiPath(p){return typeof p==="string" && p.startsWith("/api/");}
 
@@ -30,4 +32,3 @@ const _rs = history.replaceState; history.replaceState = function(s, t, u){
   return _rs.apply(this, arguments);
 };
 window.addEventListener("popstate",()=>{ if(isApiPath(location.pathname)) hardRedirect(location.pathname); });
-

@@ -1,6 +1,7 @@
 import { apiGet, apiPost } from "./apiClient";
+import { getApiBase } from "../lib/apiBase";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/,"");
+const API_BASE = getApiBase();
 
 export async function startGoogleLogin(state) {
   // #region agent log

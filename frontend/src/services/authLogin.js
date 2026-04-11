@@ -1,4 +1,6 @@
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/,"");
+import { getApiBase } from "../lib/apiBase";
+
+const API_BASE = getApiBase();
 
 export async function authLogin(state = "/app") {
   console.log("[AUTH-DEBUG] authLogin called with state:", state);

@@ -1,4 +1,6 @@
-const BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+import { getApiBase } from "../lib/apiBase";
+
+const BASE = getApiBase();
 
 const p = window.location.pathname;
 
@@ -7,4 +9,3 @@ if (p.startsWith('/api/')) {
   const h = window.location.hash || '';
   window.location.replace(`${BASE}${p}${q}${h}`);
 }
-

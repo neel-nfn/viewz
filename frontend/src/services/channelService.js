@@ -1,6 +1,7 @@
 import { apiGet, apiPost } from "./apiClient";
+import { getApiBase } from "../lib/apiBase";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE = getApiBase();
 
 export async function listChannels() {
   const r = await apiGet("/api/v1/channels/list");
@@ -54,4 +55,3 @@ export async function reconnect(state = "/app") {
     window.location.href = url;
   }
 }
-

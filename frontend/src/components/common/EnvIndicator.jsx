@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { getApiBase } from "../../lib/apiBase";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
+const API_BASE = getApiBase();
 
 export default function EnvIndicator() {
   const [envInfo, setEnvInfo] = useState(null);
@@ -33,4 +34,3 @@ export default function EnvIndicator() {
     </div>
   );
 }
-
