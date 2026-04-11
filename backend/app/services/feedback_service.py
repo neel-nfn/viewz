@@ -1,15 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
-import os
-import psycopg
-from psycopg.rows import dict_row
 from app.schemas.feedback_schemas import FeedbackCreate, FeedbackUpdate, FeedbackPublic
-
-def get_conn():
-    dsn = os.getenv("SUPABASE_DB_URL")
-    if not dsn:
-        raise RuntimeError("SUPABASE_DB_URL missing")
-    return psycopg.connect(dsn, row_factory=dict_row)
+from app.db.pg import get_conn
 
 def create_feedback(payload: FeedbackCreate) -> FeedbackPublic:
     with get_conn() as conn, conn.cursor() as cur:
@@ -63,4 +55,3 @@ def update_feedback_status(org_id: UUID, feedback_id: UUID, update: FeedbackUpda
     if not row:
         raise ValueError("not_found")
     return FeedbackPublic(**row)
-

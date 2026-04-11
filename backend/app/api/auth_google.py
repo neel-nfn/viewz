@@ -214,10 +214,16 @@ def _parse_oauth_state(raw_state: str) -> dict[str, str]:
     return parsed
 
 @router.get("/callback")
-async def callback(code: str = "", state: str = ""):
+async def callback(code: str = "", state: str = "", error: str = "", error_description: str = ""):
     state_ctx = _parse_oauth_state(state)
     org_id = resolve_org_id(state_ctx.get("org_id"))
     next_path = state_ctx.get("next") or "/app"
+
+    if error:
+        logger.error(f"[OAUTH_CALLBACK] ❌ OAuth returned error={error}, description={error_description or 'n/a'}")
+        error_value = urllib.parse.quote(error_description or error)
+        return RedirectResponse(f"{FRONTEND_FAIL}?error={error_value}")
+
     # In local dev, if Google creds are missing, return stub response
     if is_local_dev() and not has_google_creds():
         logger.info("[OAUTH_CALLBACK] Local dev mode: OAuth skipped - Google creds not set")
@@ -279,8 +285,14 @@ async def callback(code: str = "", state: str = ""):
             return RedirectResponse(f"{FRONTEND_FAIL}?error={urllib.parse.quote(error_msg or 'channel_limit_reached')}")
         
         logger.info("[OAUTH_CALLBACK] Saving channel and token...")
-        await _save_channel_and_token(ch, refresh_token or "", org_id=str(org_id))
-        logger.info("[OAUTH_CALLBACK] ✅ Save completed successfully")
+        try:
+            await _save_channel_and_token(ch, refresh_token or "", org_id=str(org_id))
+            logger.info("[OAUTH_CALLBACK] ✅ Save completed successfully")
+        except Exception as save_error:
+            if is_local_dev():
+                logger.warning(f"[OAUTH_CALLBACK] ⚠️  Save failed in local dev, continuing auth flow: {save_error}")
+            else:
+                raise
         
         # Set session cookie for local dev
         import secrets

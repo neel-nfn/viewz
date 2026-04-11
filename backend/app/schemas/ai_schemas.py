@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional, Dict
 
 class AIGenerateRequest(BaseModel):
@@ -9,6 +9,8 @@ class AIGenerateRequest(BaseModel):
     prompt_text: str = ""
 
 class AIGenerateResponse(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+
     job_id: str
     status: str
     output_url: Optional[str] = None

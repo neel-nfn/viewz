@@ -10,17 +10,11 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(async (config) => {
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/967e0ff5-1071-4c6c-958d-ca0e3611333c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'apiClient.js:11',message:'axios request interceptor',data:{url:config.url,method:config.method},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   const { data } = await supabase.auth.getSession();
   const token = data?.session?.access_token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/967e0ff5-1071-4c6c-958d-ca0e3611333c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'apiClient.js:17',message:'axios request configured',data:{hasToken:!!token,withCredentials:config.withCredentials},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   return config;
 });
 

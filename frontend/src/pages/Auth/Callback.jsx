@@ -10,7 +10,15 @@ export default function AuthCallback() {
   useEffect(() => {
     const run = async () => {
       try {
-        await completeOAuthCallback(search);
+        const result = await completeOAuthCallback(search);
+
+        if (result?.success === false) {
+          const q = new URLSearchParams(search);
+          const err = q.get("error") || result.error || "oauth_failed";
+          nav(`/auth/fail?error=${encodeURIComponent(err)}`, { replace: true });
+          return;
+        }
+
         const q = new URLSearchParams(search);
         const next = q.get("state");
         const target = (next && next.startsWith("/")) ? next : "/app/settings/team-roles";

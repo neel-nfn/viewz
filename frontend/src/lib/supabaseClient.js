@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { DEMO_MODE } from "../utils/constants";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
@@ -39,7 +40,11 @@ function createDisabledSupabaseClient() {
 }
 
 if (!isSupabaseConfigured) {
-  console.warn("Supabase env vars missing in frontend. Check .env.local");
+  if (DEMO_MODE) {
+    console.info("Supabase env vars missing in frontend. Demo Mode is active, so live auth is disabled.");
+  } else {
+    console.warn("Supabase env vars missing in frontend. Check .env.local");
+  }
 }
 
 export const supabase = isSupabaseConfigured
@@ -54,4 +59,3 @@ export const supabase = isSupabaseConfigured
 if (typeof window !== "undefined") {
   window.supabase = supabase;
 }
-

@@ -44,24 +44,12 @@ import Wizard from "../pages/Onboarding/Wizard";
 
 function Protected({ children }) {
   const { user, ready } = useAuth();
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/967e0ff5-1071-4c6c-958d-ca0e3611333c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppRouter.jsx:38',message:'Protected component render',data:{ready,hasUser:!!user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-  // #endregion
   if (!ready) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/967e0ff5-1071-4c6c-958d-ca0e3611333c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppRouter.jsx:41',message:'Protected: showing loading (ready=false)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     return <div className="p-6">Loading…</div>;
   }
   if (!user) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/967e0ff5-1071-4c6c-958d-ca0e3611333c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppRouter.jsx:45',message:'Protected: redirecting to login (no user)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     return <Navigate to="/login" replace />;
   }
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/967e0ff5-1071-4c6c-958d-ca0e3611333c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppRouter.jsx:48',message:'Protected: rendering children (user exists)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-  // #endregion
   return children;
 }
 
