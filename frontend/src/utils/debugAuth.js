@@ -1,8 +1,13 @@
-import { supabase } from "../lib/supabaseClient";
+import { isSupabaseConfigured, supabase } from "../lib/supabaseClient";
 import api from "../services/apiClient";
 
 export default async function debugAuth() {
   console.log("🧠 Supabase Auth Debug");
+
+  if (!isSupabaseConfigured) {
+    console.info("Supabase env vars are missing; debugAuth() is using the disabled client.");
+    return;
+  }
 
   const { data, error } = await supabase.auth.getSession();
 
@@ -28,4 +33,3 @@ export default async function debugAuth() {
     console.error("❌ Backend rejected token:", e?.response?.status, e?.response?.data);
   }
 }
-

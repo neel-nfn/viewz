@@ -1,19 +1,20 @@
 import { apiGet } from "./apiClient";
 import { getApiBase } from "../lib/apiBase";
 import { DEMO_MODE } from "../utils/constants";
+import { isSupabaseConfigured } from "../lib/supabaseClient";
 
 const API_BASE = getApiBase();
 
 export async function startGoogleLogin(state) {
   console.log("[AUTH-DEBUG] startGoogleLogin called with state:", state);
 
-  if (DEMO_MODE) {
+  if (DEMO_MODE || !isSupabaseConfigured) {
     if (window.location.pathname === "/login") {
       window.location.href = "/app";
       return;
     }
 
-    alert("Google OAuth is disabled while Demo Mode is on. Turn off Demo Mode to connect a live YouTube channel.");
+    alert("Google OAuth is unavailable because Supabase env vars are missing in this deployment. Demo auth is active.");
     return;
   }
 

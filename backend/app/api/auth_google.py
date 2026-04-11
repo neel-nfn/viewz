@@ -289,11 +289,10 @@ async def callback(code: str = "", state: str = "", error: str = "", error_descr
             await _save_channel_and_token(ch, refresh_token or "", org_id=str(org_id))
             logger.info("[OAUTH_CALLBACK] ✅ Save completed successfully")
         except Exception as save_error:
-            if is_local_dev():
-                logger.warning(f"[OAUTH_CALLBACK] ⚠️  Save failed in local dev, continuing auth flow: {save_error}")
-            else:
-                raise
-        
+            logger.warning(
+                f"[OAUTH_CALLBACK] ⚠️  Save failed, continuing auth flow without persistence: {save_error}"
+            )
+
         # Set session cookie for local dev
         import secrets
         session_token = secrets.token_urlsafe(32)

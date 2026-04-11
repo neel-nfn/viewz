@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { startGoogleLogin } from "../services/authService";
 import { DEMO_MODE } from "../utils/constants";
+import { isSupabaseConfigured } from "../lib/supabaseClient";
 
 export default function Login() {
   const params = new URLSearchParams(window.location.search);
@@ -17,7 +18,7 @@ export default function Login() {
     <div className="p-6 flex flex-col items-center justify-center h-screen space-y-4">
       <h2 className="text-2xl font-semibold">Sign in to Viewz</h2>
       <button className="btn btn-primary" onClick={handleLogin}>
-        {DEMO_MODE ? "Continue in Demo" : "Continue with Google"}
+        {DEMO_MODE || !isSupabaseConfigured ? "Continue in Demo" : "Continue with Google"}
       </button>
     </div>
   );

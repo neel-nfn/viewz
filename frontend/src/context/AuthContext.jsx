@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { getMe } from "../services/authService";
 import { DEMO_MODE, DEMO_ROLE } from "../utils/constants";
+import { isSupabaseConfigured } from "../lib/supabaseClient";
 
 const AuthContext = createContext(null);
 
@@ -20,7 +21,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     (async () => {
       try {
-        if (DEMO_MODE) {
+        if (DEMO_MODE || !isSupabaseConfigured) {
           setUser(buildDemoUser());
           return;
         }
