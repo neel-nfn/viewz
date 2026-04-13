@@ -1,4 +1,4 @@
-export const DEMO_MODE = (localStorage.getItem('viewz_demo') ?? (import.meta.env.VITE_DEMO_MODE==='1' ? '1' : '0')) === '1';
+export const DEMO_MODE = false;
 
 export const DEMO_ROLE = (localStorage.getItem('viewz_user_role') || localStorage.getItem('viewz_role') || import.meta.env.VITE_DEMO_ROLE || 'manager').toLowerCase();
 

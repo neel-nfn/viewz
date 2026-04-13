@@ -30,7 +30,15 @@ def start_login(body: LoginBody | None = None):
 
 @router.get("/me")
 async def read_me(request: FastAPIRequest, user = Depends(get_current_user)):
-    return {"user": user}
+    user_id = user.get("id") or user.get("sub") or user.get("user_id")
+    user_email = user.get("email")
+    user_role = user.get("role") or user.get("app_metadata", {}).get("role") or "manager"
+
+    normalized_user = dict(user)
+    normalized_user["id"] = user_id
+    normalized_user["email"] = user_email
+    normalized_user["role"] = user_role
+    return {"user": normalized_user}
 
 @router.get("/debug-cookies")
 async def debug_cookies(request: FastAPIRequest):

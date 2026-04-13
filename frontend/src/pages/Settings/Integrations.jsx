@@ -79,7 +79,7 @@ export default function Integrations() {
   }
 
   const int = integrations || { youtube_connected: false, ai_key_configured: false, provider: "gemini" };
-  const isDemo = localStorage.getItem('viewz_demo') === '1' || !int.youtube_connected;
+  const isDemo = !int.youtube_connected;
   
   // Empty state: if integrations is null/empty, show empty state
   if (!integrations || (integrations && typeof integrations === 'object' && Object.keys(integrations).length === 0)) {
